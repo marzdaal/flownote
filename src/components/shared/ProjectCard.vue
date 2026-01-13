@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { FolderKanban, Calendar, CheckCircle2, Circle, Target } from 'lucide-vue-next'
+import { FolderKanban, Calendar, CheckCircle2, Circle } from 'lucide-vue-next'
 import type { Project } from '@/types'
 import { useFilesStore } from '@/stores/files'
 import { useUiStore } from '@/stores/ui'

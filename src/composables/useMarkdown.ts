@@ -1,4 +1,3 @@
-import { ref } from 'vue'
 import type { Frontmatter } from '@/types'
 
 export function useMarkdown() {

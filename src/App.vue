@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch, ref, nextTick } from 'vue'
+import { computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import Sidebar from '@/components/layout/Sidebar.vue'
 import EditorPanel from '@/components/layout/EditorPanel.vue'
@@ -13,17 +13,10 @@ const uiStore = useUiStore()
 const settingsStore = useSettingsStore()
 const route = useRoute()
 
-const quickCaptureBackdrop = ref<HTMLElement | null>(null)
-
 // Show sidebar only when vault is open (not on welcome screen)
 const showSidebar = computed(() => {
   return route.name !== 'welcome' && settingsStore.settings.vaultPath
 })
-
-// Handle backdrop click for Quick Capture
-function handleBackdropClick() {
-  uiStore.closeQuickCapture()
-}
 
 // Focus backdrop when Quick Capture opens for Escape to work
 watch(() => uiStore.quickCaptureOpen, (isOpen) => {

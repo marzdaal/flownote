@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { Search, X, FileText, FolderKanban, CheckSquare, Inbox } from 'lucide-vue-next'
 import { useSearch } from '@/composables/useSearch'
 import { useUiStore } from '@/stores/ui'

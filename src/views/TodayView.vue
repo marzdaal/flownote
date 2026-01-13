@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { CalendarDays, Plus, Sun, Moon, CheckCircle2, Filter } from 'lucide-vue-next'
+import { CalendarDays, Plus, Sun, CheckCircle2, Filter } from 'lucide-vue-next'
 import { useFilesStore } from '@/stores/files'
 import { useUiStore } from '@/stores/ui'
 import { useAreasStore } from '@/stores/areas'

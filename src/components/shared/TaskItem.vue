@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { Calendar, Flag, Link, Hash } from 'lucide-vue-next'
+import { computed } from 'vue'
+import { Calendar, Flag, Link } from 'lucide-vue-next'
 import type { Task } from '@/types'
 import { useUiStore } from '@/stores/ui'
 import { useAreasStore } from '@/stores/areas'

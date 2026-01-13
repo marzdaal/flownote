@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ArrowRight, Calendar, Flag, Hash } from 'lucide-vue-next'
+import { ArrowRight, Calendar, Flag } from 'lucide-vue-next'
 import type { VaultFile } from '@/types'
 import { useUiStore } from '@/stores/ui'
 import { useFilesStore } from '@/stores/files'

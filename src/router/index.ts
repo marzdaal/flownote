@@ -60,7 +60,7 @@ const router = createRouter({
 })
 
 // Navigation guard - redirect to welcome if no vault
-router.beforeEach((to, from) => {
+router.beforeEach((to) => {
   const vaultPath = localStorage.getItem('flownotes-settings')
   const settings = vaultPath ? JSON.parse(vaultPath) : {}
   
