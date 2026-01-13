@@ -1,0 +1,73 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - heading "FlowNotes" [level=1] [ref=e7]
+        - button "Search (⌘K)" [ref=e9] [cursor=pointer]:
+          - img [ref=e10]
+      - button "Quick Capture" [ref=e13] [cursor=pointer]:
+        - img [ref=e14]
+        - generic [ref=e15]: Quick Capture
+    - navigation [ref=e16]:
+      - button "Inbox" [ref=e17] [cursor=pointer]:
+        - img [ref=e18]
+        - generic [ref=e21]: Inbox
+      - button "Today" [ref=e22] [cursor=pointer]:
+        - img [ref=e23]
+        - generic [ref=e25]: Today
+      - button "Projects" [ref=e26] [cursor=pointer]:
+        - img [ref=e27]
+        - generic [ref=e29]: Projects
+      - button "Board" [ref=e30] [cursor=pointer]:
+        - img [ref=e31]
+        - generic [ref=e36]: Board
+      - button "Calendar" [ref=e37] [cursor=pointer]:
+        - img [ref=e38]
+        - generic [ref=e40]: Calendar
+      - button "Notes" [ref=e41] [cursor=pointer]:
+        - img [ref=e42]
+        - generic [ref=e45]: Notes
+      - button "Areas" [ref=e46] [cursor=pointer]:
+        - img [ref=e47]
+        - generic [ref=e51]: Areas
+    - generic [ref=e52]:
+      - paragraph [ref=e53]: Areas
+      - generic [ref=e54]:
+        - button "Work 0" [ref=e55] [cursor=pointer]:
+          - generic [ref=e57]: Work
+          - generic [ref=e58]: "0"
+        - button "Health 0" [ref=e59] [cursor=pointer]:
+          - generic [ref=e61]: Health
+          - generic [ref=e62]: "0"
+        - button "Learning 0" [ref=e63] [cursor=pointer]:
+          - generic [ref=e65]: Learning
+          - generic [ref=e66]: "0"
+        - button "Home 0" [ref=e67] [cursor=pointer]:
+          - generic [ref=e69]: Home
+          - generic [ref=e70]: "0"
+    - button "Settings" [ref=e72] [cursor=pointer]:
+      - img [ref=e73]
+      - generic [ref=e76]: Settings
+  - main [ref=e77]:
+    - generic [ref=e79]: FlowNotes
+    - generic [ref=e81]:
+      - generic [ref=e83]:
+        - generic [ref=e84]:
+          - img [ref=e86]
+          - generic [ref=e89]:
+            - heading "Inbox" [level=1] [ref=e90]
+            - paragraph [ref=e91]: 0 items to process
+        - button "Quick Capture" [ref=e92] [cursor=pointer]:
+          - img [ref=e93]
+          - text: Quick Capture
+      - generic [ref=e95]:
+        - img [ref=e97]
+        - heading "Inbox Zero!" [level=2] [ref=e100]
+        - paragraph [ref=e101]: Your inbox is empty. Great job! Use Quick Capture to add new thoughts and ideas.
+        - button "Quick Capture" [ref=e102] [cursor=pointer]:
+          - img [ref=e103]
+          - text: Quick Capture
+```

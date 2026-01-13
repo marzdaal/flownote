@@ -1,0 +1,87 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - heading "FlowNotes" [level=1] [ref=e7]
+        - button "Search (⌘K)" [ref=e9] [cursor=pointer]:
+          - img [ref=e10]
+      - button "Quick Capture" [ref=e13] [cursor=pointer]:
+        - img [ref=e14]
+        - generic [ref=e15]: Quick Capture
+    - navigation [ref=e16]:
+      - button "Inbox" [ref=e17] [cursor=pointer]:
+        - img [ref=e18]
+        - generic [ref=e21]: Inbox
+      - button "Today" [ref=e22] [cursor=pointer]:
+        - img [ref=e23]
+        - generic [ref=e25]: Today
+      - button "Projects" [ref=e26] [cursor=pointer]:
+        - img [ref=e27]
+        - generic [ref=e29]: Projects
+      - button "Board" [ref=e30] [cursor=pointer]:
+        - img [ref=e31]
+        - generic [ref=e36]: Board
+      - button "Calendar" [ref=e37] [cursor=pointer]:
+        - img [ref=e38]
+        - generic [ref=e40]: Calendar
+      - button "Notes" [ref=e41] [cursor=pointer]:
+        - img [ref=e42]
+        - generic [ref=e45]: Notes
+      - button "Areas" [ref=e46] [cursor=pointer]:
+        - img [ref=e47]
+        - generic [ref=e51]: Areas
+    - generic [ref=e52]:
+      - paragraph [ref=e53]: Areas
+      - generic [ref=e54]:
+        - button "Work 0" [ref=e55] [cursor=pointer]:
+          - generic [ref=e57]: Work
+          - generic [ref=e58]: "0"
+        - button "Health 0" [ref=e59] [cursor=pointer]:
+          - generic [ref=e61]: Health
+          - generic [ref=e62]: "0"
+        - button "Learning 0" [ref=e63] [cursor=pointer]:
+          - generic [ref=e65]: Learning
+          - generic [ref=e66]: "0"
+        - button "Home 0" [ref=e67] [cursor=pointer]:
+          - generic [ref=e69]: Home
+          - generic [ref=e70]: "0"
+    - button "Settings" [ref=e72] [cursor=pointer]:
+      - img [ref=e73]
+      - generic [ref=e76]: Settings
+  - main [ref=e77]:
+    - generic [ref=e79]: FlowNotes
+    - generic [ref=e81]:
+      - generic [ref=e82]:
+        - generic [ref=e83]:
+          - generic [ref=e84]:
+            - paragraph [ref=e85]: Thursday, January 8
+            - heading "Good evening 👋" [level=1] [ref=e86]
+          - button "Add Task" [ref=e88] [cursor=pointer]:
+            - img [ref=e89]
+            - text: Add Task
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - img [ref=e93]
+            - generic [ref=e96]:
+              - paragraph [ref=e97]: "0"
+              - paragraph [ref=e98]: Today
+          - generic [ref=e99]:
+            - img [ref=e101]
+            - generic [ref=e103]:
+              - paragraph [ref=e104]: "0"
+              - paragraph [ref=e105]: Overdue
+          - generic [ref=e106]:
+            - img [ref=e108]
+            - generic [ref=e110]:
+              - paragraph [ref=e111]: "0"
+              - paragraph [ref=e112]: This week
+      - generic [ref=e115]:
+        - heading "Today" [level=2] [ref=e116]
+        - generic [ref=e117]:
+          - img [ref=e118]
+          - paragraph [ref=e124]: No tasks scheduled for today
+          - button "Add a task" [ref=e125] [cursor=pointer]
+```
