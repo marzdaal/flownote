@@ -5,6 +5,7 @@ package-lock.json
 # Build outputs
 dist/
 target/
+**/target/
 *.log
 
 # IDE
@@ -20,6 +21,7 @@ Thumbs.db
 # Tauri
 src-tauri/target/
 src-tauri/gen/
+src-tauri/**/*.rlib
 
 # Test results
 test-results/
@@ -27,3 +29,10 @@ playwright-report/
 
 # Vault (user data)
 vault/
+
+# Large binary files
+*.rlib
+*.so
+*.dylib
+*.dll
+*.a
