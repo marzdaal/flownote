@@ -40,7 +40,8 @@ const navItems = [
   { id: 'projects', label: 'Projects', icon: FolderKanban, path: '/projects', count: () => filesStore.activeProjects.length },
   { id: 'kanban', label: 'Board', icon: LayoutGrid, path: '/kanban' },
   { id: 'calendar', label: 'Calendar', icon: Calendar, path: '/calendar' },
-  { id: 'notes', label: 'Notes', icon: FileText, path: '/notes', count: () => filesStore.notes.length },
+  { id: 'notes', label: 'Заметки', icon: FileText, path: '/notes', count: () => filesStore.notes.length },
+  { id: 'daily-notes', label: 'Дневные заметки', icon: Calendar, path: '/daily', count: () => filesStore.dailyNotes.length },
   { id: 'areas', label: 'Areas', icon: Target, path: '/areas' },
 ]
 

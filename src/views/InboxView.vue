@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Inbox, Plus, Trash2, ArrowRight } from 'lucide-vue-next'
+import { Inbox, Plus, CalendarDays } from 'lucide-vue-next'
 import { useFilesStore } from '@/stores/files'
 import { useUiStore } from '@/stores/ui'
 import FileCard from '@/components/shared/FileCard.vue'
@@ -13,6 +13,29 @@ const isEmpty = computed(() => inboxFiles.value.length === 0)
 
 function handleQuickCapture() {
   uiStore.openQuickCapture()
+}
+
+async function handleCreateDailyNote() {
+  const today = new Date().toISOString().split('T')[0]
+  const existingNote = filesStore.todayNote
+
+  if (existingNote) {
+    uiStore.openEditor(existingNote)
+    return
+  }
+
+  const content = `# ${today}\n\n## План на день\n- [ ]\n\n## Заметки\n- \n\n## Итоги дня\n...`
+
+  const note = await filesStore.createFile(
+    filesStore.vaultConfig.folders.daily,
+    today,
+    content,
+    { date: today }
+  )
+
+  if (note) {
+    uiStore.openEditor(note)
+  }
 }
 </script>
 
@@ -33,13 +56,22 @@ function handleQuickCapture() {
           </div>
         </div>
 
-        <button 
-          class="btn-primary"
-          @click="handleQuickCapture"
-        >
-          <Plus class="w-4 h-4" />
-          Quick Capture
-        </button>
+        <div class="flex items-center gap-2">
+          <button 
+            class="btn-ghost"
+            @click="handleCreateDailyNote"
+          >
+            <CalendarDays class="w-4 h-4" />
+            Дневная заметка
+          </button>
+          <button 
+            class="btn-primary"
+            @click="handleQuickCapture"
+          >
+            <Plus class="w-4 h-4" />
+            Quick Capture
+          </button>
+        </div>
       </div>
     </header>
 
