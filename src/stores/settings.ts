@@ -9,7 +9,7 @@ const defaultSettings: AppSettings = {
   showLineNumbers: false,
   spellcheck: true,
   autoSave: true,
-  autoSaveDelay: 1000,
+  autoSaveDelay: 0,
 }
 
 export const useSettingsStore = defineStore('settings', () => {
