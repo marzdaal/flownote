@@ -438,20 +438,22 @@ async function createTaskInColumn(columnId: string) {
           </div>
 
           <!-- Tasks -->
-          <div class="flex-1 overflow-y-auto p-2 space-y-2 no-drag" style="-webkit-app-region: no-drag;">
-            <div
-              v-for="task in column.tasks"
-              :key="task.path"
-              draggable="true"
-              class="bg-surface rounded-lg border border-border hover:border-border-light transition-all cursor-grab active:cursor-grabbing select-none no-drag"
-              :class="{ 'opacity-50': draggedTask?.path === task.path }"
-              style="-webkit-app-region: no-drag !important; user-select: none;"
-              @dragstart="onDragStart($event, task)"
-              @dragend="onDragEnd($event)"
-              @click.stop
-            >
-              <TaskItem :task="task" :compact="true" />
-            </div>
+          <div class="flex-1 overflow-y-auto p-2 no-drag" style="-webkit-app-region: no-drag;">
+            <TransitionGroup name="kanban-list" tag="div" class="space-y-2">
+              <div
+                v-for="task in column.tasks"
+                :key="task.path"
+                draggable="true"
+                class="bg-surface rounded-lg border border-border hover:border-border-light transition-all cursor-grab active:cursor-grabbing select-none no-drag"
+                :class="{ 'opacity-50': draggedTask?.path === task.path }"
+                style="-webkit-app-region: no-drag !important; user-select: none;"
+                @dragstart="onDragStart($event, task)"
+                @dragend="onDragEnd($event)"
+                @click.stop
+              >
+                <TaskItem :task="task" :compact="true" />
+              </div>
+            </TransitionGroup>
 
             <!-- Empty state -->
             <div 
@@ -475,3 +477,21 @@ async function createTaskInColumn(columnId: string) {
     </div>
   </div>
 </template>
+
+<style scoped>
+.kanban-list-move,
+.kanban-list-enter-active,
+.kanban-list-leave-active {
+  transition: all 0.25s ease;
+}
+
+.kanban-list-enter-from {
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+}
+
+.kanban-list-leave-to {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+}
+</style>
