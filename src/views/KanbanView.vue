@@ -89,12 +89,14 @@ const draggedTask = ref<Task | null>(null)
 const dragOverColumn = ref<string | null>(null)
 const isDragging = ref(false)
 const dragStartPos = ref<{ x: number; y: number } | null>(null)
+const hasDragged = ref(false)
 
 function onDragStart(event: DragEvent, task: Task) {
   console.log('Drag start:', task.name)
   event.stopPropagation()
   draggedTask.value = task
   isDragging.value = true
+  hasDragged.value = true
   dragStartPos.value = { x: event.clientX, y: event.clientY }
   
   if (event.dataTransfer) {
@@ -154,6 +156,9 @@ function handleMouseUp(event: MouseEvent) {
 
 function cleanupDrag() {
   isDragging.value = false
+  setTimeout(() => {
+    hasDragged.value = false
+  }, 100)
   dragStartPos.value = null
   document.removeEventListener('mousemove', handleMouseMove)
   document.removeEventListener('mouseup', handleMouseUp)
@@ -189,6 +194,13 @@ async function handleDrop(columnId: string) {
   
   draggedTask.value = null
   dragOverColumn.value = null
+}
+
+function handleTaskClick(task: Task) {
+  if (isDragging.value || hasDragged.value) {
+    return
+  }
+  uiStore.openEditor(task)
 }
 
 function onDragEnd(event: DragEvent) {
@@ -449,9 +461,9 @@ async function createTaskInColumn(columnId: string) {
                 style="-webkit-app-region: no-drag !important; user-select: none;"
                 @dragstart="onDragStart($event, task)"
                 @dragend="onDragEnd($event)"
-                @click.stop
+                @click="handleTaskClick(task)"
               >
-                <TaskItem :task="task" :compact="true" />
+                <TaskItem :task="task" :compact="true" :open-on-click="false" />
               </div>
             </TransitionGroup>
 
