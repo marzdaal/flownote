@@ -38,6 +38,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/NotesView.vue'),
   },
   {
+    path: '/daily',
+    name: 'daily-notes',
+    component: () => import('@/views/DailyNotesView.vue'),
+  },
+  {
     path: '/areas',
     name: 'areas',
     component: () => import('@/views/AreasView.vue'),

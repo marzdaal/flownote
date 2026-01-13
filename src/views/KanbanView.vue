@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
-import { LayoutGrid, Filter, Plus } from 'lucide-vue-next'
+import { computed, ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { LayoutGrid, Filter, Plus, GripVertical } from 'lucide-vue-next'
 import { useFilesStore } from '@/stores/files'
 import { useUiStore } from '@/stores/ui'
 import { useAreasStore } from '@/stores/areas'
 import TaskItem from '@/components/shared/TaskItem.vue'
 import type { Task, AreaType } from '@/types'
+import { addColumn as addColumnUtil, reorderColumns, updateColumnTitle } from '@/utils/kanban'
 
 const filesStore = useFilesStore()
 const uiStore = useUiStore()
@@ -38,45 +39,143 @@ onUnmounted(() => {
   cleanupDrag()
 })
 
-interface KanbanColumn {
+interface KanbanColumnConfig {
   id: string
   title: string
   color: string
+  status: string
+}
+
+interface KanbanColumn extends KanbanColumnConfig {
   tasks: Task[]
 }
 
-const columns = computed<KanbanColumn[]>(() => {
-  const filter = (tasks: Task[]) => {
-    if (filterArea.value === 'all') return tasks
-    return tasks.filter(t => t.frontmatter.area === filterArea.value)
+const STORAGE_KEY = 'flownotes-kanban-columns'
+
+const defaultColumns: KanbanColumnConfig[] = [
+  {
+    id: 'not-started',
+    title: 'Не начато',
+    color: 'border-gray-500',
+    status: 'not-started',
+  },
+  {
+    id: 'next',
+    title: 'Next Actions',
+    color: 'border-accent',
+    status: 'next-action',
+  },
+  {
+    id: 'waiting',
+    title: 'Waiting For',
+    color: 'border-warning',
+    status: 'waiting',
+  },
+  {
+    id: 'someday',
+    title: 'Someday',
+    color: 'border-gray-600',
+    status: 'someday',
+  },
+]
+
+function hydrateColumns(): KanbanColumnConfig[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (!stored) return defaultColumns
+    const parsed = JSON.parse(stored) as KanbanColumnConfig[]
+    if (!Array.isArray(parsed)) return defaultColumns
+    const defaultsById = new Map(defaultColumns.map(column => [column.id, column]))
+    const merged = parsed
+      .filter(column => column && typeof column.id === 'string')
+      .map(column => ({
+        ...defaultsById.get(column.id),
+        ...column,
+      }))
+    const existingIds = new Set(merged.map(column => column.id))
+    defaultColumns.forEach(column => {
+      if (!existingIds.has(column.id)) {
+        merged.push(column)
+      }
+    })
+    return merged
+  } catch (error) {
+    console.error('Failed to hydrate kanban columns', error)
+    return defaultColumns
+  }
+}
+
+const columnConfigs = ref<KanbanColumnConfig[]>(hydrateColumns())
+const editingColumnId = ref<string | null>(null)
+const editingTitle = ref('')
+const addColumnOpen = ref(false)
+const newColumnTitle = ref('')
+const titleInputRef = ref<HTMLInputElement | null>(null)
+const newColumnInputRef = ref<HTMLInputElement | null>(null)
+const draggedColumnId = ref<string | null>(null)
+const dragOverColumnId = ref<string | null>(null)
+
+watch(editingColumnId, async (columnId) => {
+  if (columnId) {
+    await nextTick()
+    titleInputRef.value?.focus()
+    titleInputRef.value?.select()
+  }
+})
+
+watch(addColumnOpen, async (isOpen) => {
+  if (isOpen) {
+    await nextTick()
+    newColumnInputRef.value?.focus()
+  }
+})
+
+const statusToColumnId = computed(() => {
+  return new Map(columnConfigs.value.map(column => [column.status, column.id]))
+})
+
+const filteredTasks = computed(() => {
+  if (filterArea.value === 'all') return filesStore.tasks
+  return filesStore.tasks.filter(t => t.frontmatter.area === filterArea.value)
+})
+
+function getColumnIdForTask(task: Task): string | null {
+  const status = task.frontmatter.status
+  if (status && statusToColumnId.value.has(status)) {
+    return statusToColumnId.value.get(status) ?? null
   }
 
-  return [
-    {
-      id: 'not-started',
-      title: 'Не начато',
-      color: 'border-gray-500',
-      tasks: filter(filesStore.notStarted),
-    },
-    {
-      id: 'next',
-      title: 'Next Actions',
-      color: 'border-accent',
-      tasks: filter(filesStore.nextActions),
-    },
-    {
-      id: 'waiting',
-      title: 'Waiting For',
-      color: 'border-warning',
-      tasks: filter(filesStore.waitingFor),
-    },
-    {
-      id: 'someday',
-      title: 'Someday',
-      color: 'border-gray-600',
-      tasks: filter(filesStore.somedayMaybe),
-    },
-  ]
+  if (task.folder.includes('Next Actions')) {
+    return statusToColumnId.value.get('next-action') ?? null
+  }
+  if (task.folder.includes('Waiting For')) {
+    return statusToColumnId.value.get('waiting') ?? null
+  }
+  if (task.folder.includes('Someday Maybe')) {
+    return statusToColumnId.value.get('someday') ?? null
+  }
+
+  return null
+}
+
+const columns = computed<KanbanColumn[]>(() => {
+  const tasksByColumn = new Map<string, Task[]>()
+
+  columnConfigs.value.forEach(column => {
+    tasksByColumn.set(column.id, [])
+  })
+
+  filteredTasks.value.forEach(task => {
+    const columnId = getColumnIdForTask(task)
+    if (columnId && tasksByColumn.has(columnId)) {
+      tasksByColumn.get(columnId)?.push(task)
+    }
+  })
+
+  return columnConfigs.value.map(column => ({
+    ...column,
+    tasks: tasksByColumn.get(column.id) ?? [],
+  }))
 })
 
 const areas = computed(() => [
@@ -84,17 +183,134 @@ const areas = computed(() => [
   ...areasStore.areasList.map(a => ({ value: a.id, label: a.name }))
 ])
 
+function persistColumns(nextColumns: KanbanColumnConfig[], fallback: KanbanColumnConfig[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextColumns))
+  } catch (error) {
+    console.error('Failed to persist kanban columns', error)
+    columnConfigs.value = fallback
+    alert('Не удалось сохранить изменения колонок. Попробуйте ещё раз.')
+  }
+}
+
+function validateColumnTitle(value: string) {
+  const trimmed = value.trim()
+  if (!trimmed) return { ok: false, value: '', message: 'Название колонки не может быть пустым.' }
+  if (trimmed.length > 60) return { ok: false, value: trimmed.slice(0, 60), message: 'Название слишком длинное.' }
+  return { ok: true, value: trimmed, message: '' }
+}
+
+function startEditingColumn(column: KanbanColumnConfig) {
+  editingColumnId.value = column.id
+  editingTitle.value = column.title
+}
+
+function cancelEditing() {
+  editingColumnId.value = null
+  editingTitle.value = ''
+}
+
+function saveColumnTitle(columnId: string) {
+  const validated = validateColumnTitle(editingTitle.value)
+  if (!validated.ok) {
+    alert(validated.message)
+    return
+  }
+
+  editingTitle.value = validated.value
+  const previous = columnConfigs.value
+  const next = updateColumnTitle(previous, columnId, validated.value)
+  columnConfigs.value = next
+  persistColumns(next, previous)
+  cancelEditing()
+}
+
+function openAddColumn() {
+  addColumnOpen.value = true
+  newColumnTitle.value = ''
+}
+
+function cancelAddColumn() {
+  addColumnOpen.value = false
+  newColumnTitle.value = ''
+}
+
+function createColumnId(title: string) {
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9а-яё]+/gi, '-')
+    .replace(/^-+|-+$/g, '')
+  return `custom-${slug || 'column'}-${Date.now()}`
+}
+
+function handleAddColumn() {
+  const validated = validateColumnTitle(newColumnTitle.value)
+  if (!validated.ok) {
+    alert(validated.message)
+    return
+  }
+
+  newColumnTitle.value = validated.value
+  const column: KanbanColumnConfig = {
+    id: createColumnId(validated.value),
+    title: validated.value,
+    color: 'border-gray-500',
+    status: '',
+  }
+  column.status = column.id
+
+  const previous = columnConfigs.value
+  const next = addColumnUtil(previous, column)
+  columnConfigs.value = next
+  persistColumns(next, previous)
+  cancelAddColumn()
+}
+
+function handleColumnDragStart(event: DragEvent, columnId: string) {
+  draggedColumnId.value = columnId
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', columnId)
+  }
+}
+
+function handleColumnDragOver(event: DragEvent, columnId: string) {
+  if (!draggedColumnId.value || draggedColumnId.value === columnId) return
+  event.preventDefault()
+  dragOverColumnId.value = columnId
+}
+
+function handleColumnDrop(event: DragEvent, columnId: string) {
+  event.preventDefault()
+  const activeId = draggedColumnId.value ?? event.dataTransfer?.getData('text/plain')
+  if (!activeId) return
+
+  const previous = columnConfigs.value
+  const next = reorderColumns(previous, activeId, columnId)
+  columnConfigs.value = next
+  persistColumns(next, previous)
+  draggedColumnId.value = null
+  dragOverColumnId.value = null
+}
+
+function handleColumnDragEnd() {
+  draggedColumnId.value = null
+  dragOverColumnId.value = null
+}
+
 // Simple drag and drop state
 const draggedTask = ref<Task | null>(null)
 const dragOverColumn = ref<string | null>(null)
 const isDragging = ref(false)
 const dragStartPos = ref<{ x: number; y: number } | null>(null)
+const hasDragged = ref(false)
 
 function onDragStart(event: DragEvent, task: Task) {
   console.log('Drag start:', task.name)
   event.stopPropagation()
   draggedTask.value = task
   isDragging.value = true
+  hasDragged.value = true
   dragStartPos.value = { x: event.clientX, y: event.clientY }
   
   if (event.dataTransfer) {
@@ -154,6 +370,9 @@ function handleMouseUp(event: MouseEvent) {
 
 function cleanupDrag() {
   isDragging.value = false
+  setTimeout(() => {
+    hasDragged.value = false
+  }, 100)
   dragStartPos.value = null
   document.removeEventListener('mousemove', handleMouseMove)
   document.removeEventListener('mouseup', handleMouseUp)
@@ -163,22 +382,7 @@ async function handleDrop(columnId: string) {
   if (!draggedTask.value) return
   
   const task = draggedTask.value
-  let newStatus = ''
-  
-  switch (columnId) {
-    case 'not-started':
-      newStatus = 'not-started'
-      break
-    case 'next':
-      newStatus = 'next-action'
-      break
-    case 'waiting':
-      newStatus = 'waiting'
-      break
-    case 'someday':
-      newStatus = 'someday'
-      break
-  }
+  const newStatus = columnConfigs.value.find(column => column.id === columnId)?.status ?? ''
   
   if (newStatus && task.frontmatter.status !== newStatus) {
     console.log('Updating task status from', task.frontmatter.status, 'to', newStatus)
@@ -191,12 +395,23 @@ async function handleDrop(columnId: string) {
   dragOverColumn.value = null
 }
 
+function handleTaskClick(task: Task) {
+  if (isDragging.value || hasDragged.value) {
+    return
+  }
+  uiStore.openEditor(task)
+}
+
 function onDragEnd(event: DragEvent) {
   console.log('Drag end')
   cleanupDrag()
 }
 
 function onDragEnter(event: DragEvent, columnId: string) {
+  if (draggedColumnId.value) {
+    handleColumnDragOver(event, columnId)
+    return
+  }
   console.log('Drag enter column:', columnId)
   event.preventDefault()
   event.stopPropagation()
@@ -207,6 +422,10 @@ function onDragEnter(event: DragEvent, columnId: string) {
 }
 
 function onDragOver(event: DragEvent, columnId: string) {
+  if (draggedColumnId.value) {
+    handleColumnDragOver(event, columnId)
+    return
+  }
   event.preventDefault()
   event.stopPropagation()
   if (event.dataTransfer) {
@@ -217,6 +436,10 @@ function onDragOver(event: DragEvent, columnId: string) {
 }
 
 function onDragLeave(event: DragEvent) {
+  if (draggedColumnId.value) {
+    dragOverColumnId.value = null
+    return
+  }
   // Only clear if we're actually leaving the column, not just moving to a child
   const relatedTarget = event.relatedTarget as HTMLElement | null
   const currentTarget = event.currentTarget as HTMLElement
@@ -240,6 +463,10 @@ function onDragLeave(event: DragEvent) {
 }
 
 async function onDrop(event: DragEvent, columnId: string) {
+  if (draggedColumnId.value) {
+    handleColumnDrop(event, columnId)
+    return
+  }
   event.preventDefault()
   event.stopPropagation()
   
@@ -273,22 +500,7 @@ async function onDrop(event: DragEvent, columnId: string) {
   }
 
   const task = draggedTask.value
-  let newStatus = ''
-
-  switch (columnId) {
-    case 'not-started':
-      newStatus = 'not-started'
-      break
-    case 'next':
-      newStatus = 'next-action'
-      break
-    case 'waiting':
-      newStatus = 'waiting'
-      break
-    case 'someday':
-      newStatus = 'someday'
-      break
-  }
+  const newStatus = columnConfigs.value.find(column => column.id === columnId)?.status ?? ''
 
   // Just update status, no folder movement needed
   if (newStatus && task.frontmatter.status !== newStatus) {
@@ -312,14 +524,15 @@ async function onDrop(event: DragEvent, columnId: string) {
 // Get folder and frontmatter for a column - all tasks go to Tasks folder
 function getColumnConfig(columnId: string) {
   const tasksFolder = filesStore.vaultConfig.folders.tasks
-  
-  switch (columnId) {
+  const columnStatus = columnConfigs.value.find(column => column.id === columnId)?.status
+
+  switch (columnStatus) {
     case 'not-started':
       return {
         folder: `${tasksFolder}/Next Actions`,
         frontmatter: { status: 'not-started' }
       }
-    case 'next':
+    case 'next-action':
       return {
         folder: `${tasksFolder}/Next Actions`,
         frontmatter: { status: 'next-action', priority: 'medium' }
@@ -335,7 +548,7 @@ function getColumnConfig(columnId: string) {
         frontmatter: { status: 'someday' }
       }
     default:
-      return { folder: tasksFolder, frontmatter: {} }
+      return { folder: tasksFolder, frontmatter: columnStatus ? { status: columnStatus } : {} }
   }
 }
 
@@ -420,7 +633,11 @@ async function createTaskInColumn(columnId: string) {
           :key="column.id"
           :data-column-id="column.id"
           class="w-80 flex flex-col bg-surface-dark rounded-xl border-t-4 flex-shrink-0 no-drag"
-          :class="[column.color, dragOverColumn === column.id ? 'ring-2 ring-accent' : '']"
+          :class="[
+            column.color,
+            dragOverColumn === column.id ? 'ring-2 ring-accent' : '',
+            dragOverColumnId === column.id ? 'ring-2 ring-warning' : ''
+          ]"
           style="-webkit-app-region: no-drag !important;"
           @dragover="onDragOver($event, column.id)"
           @dragenter="onDragEnter($event, column.id)"
@@ -430,7 +647,34 @@ async function createTaskInColumn(columnId: string) {
           <!-- Column header -->
           <div class="px-4 py-3 border-b border-border/50">
             <div class="flex items-center justify-between">
-              <h3 class="font-medium text-gray-100">{{ column.title }}</h3>
+              <div class="flex items-center gap-2 flex-1 min-w-0">
+                <button
+                  class="text-gray-500 hover:text-gray-300 cursor-grab active:cursor-grabbing"
+                  draggable="true"
+                  @dragstart="handleColumnDragStart($event, column.id)"
+                  @dragend="handleColumnDragEnd"
+                >
+                  <GripVertical class="w-4 h-4" />
+                </button>
+                <input
+                  v-if="editingColumnId === column.id"
+                  ref="titleInputRef"
+                  v-model="editingTitle"
+                  class="input py-1 px-2 text-sm w-full"
+                  maxlength="60"
+                  @keydown.enter.prevent="saveColumnTitle(column.id)"
+                  @keydown.esc.prevent="cancelEditing"
+                  @click.stop
+                  @blur="cancelEditing"
+                />
+                <button
+                  v-else
+                  class="font-medium text-gray-100 truncate text-left"
+                  @click="startEditingColumn(column)"
+                >
+                  {{ column.title }}
+                </button>
+              </div>
               <span class="text-sm text-gray-500 bg-surface px-2 py-0.5 rounded-full">
                 {{ column.tasks.length }}
               </span>
@@ -438,20 +682,22 @@ async function createTaskInColumn(columnId: string) {
           </div>
 
           <!-- Tasks -->
-          <div class="flex-1 overflow-y-auto p-2 space-y-2 no-drag" style="-webkit-app-region: no-drag;">
-            <div
-              v-for="task in column.tasks"
-              :key="task.path"
-              draggable="true"
-              class="bg-surface rounded-lg border border-border hover:border-border-light transition-all cursor-grab active:cursor-grabbing select-none no-drag"
-              :class="{ 'opacity-50': draggedTask?.path === task.path }"
-              style="-webkit-app-region: no-drag !important; user-select: none;"
-              @dragstart="onDragStart($event, task)"
-              @dragend="onDragEnd($event)"
-              @click.stop
-            >
-              <TaskItem :task="task" :compact="true" />
-            </div>
+          <div class="flex-1 overflow-y-auto p-2 no-drag" style="-webkit-app-region: no-drag;">
+            <TransitionGroup name="kanban-list" tag="div" class="space-y-2">
+              <div
+                v-for="task in column.tasks"
+                :key="task.path"
+                draggable="true"
+                class="bg-surface rounded-lg border border-border hover:border-border-light transition-all cursor-grab active:cursor-grabbing select-none no-drag"
+                :class="{ 'opacity-50': draggedTask?.path === task.path }"
+                style="-webkit-app-region: no-drag !important; user-select: none;"
+                @dragstart="onDragStart($event, task)"
+                @dragend="onDragEnd($event)"
+                @click="handleTaskClick(task)"
+              >
+                <TaskItem :task="task" :compact="true" :open-on-click="false" />
+              </div>
+            </TransitionGroup>
 
             <!-- Empty state -->
             <div 
@@ -471,7 +717,58 @@ async function createTaskInColumn(columnId: string) {
             </button>
           </div>
         </div>
+        <div class="w-64 flex-shrink-0">
+          <div
+            class="bg-surface-dark border border-dashed border-border rounded-xl p-4 flex flex-col gap-3"
+          >
+            <button
+              v-if="!addColumnOpen"
+              class="w-full flex items-center justify-center gap-2 py-2 text-sm text-gray-500 hover:text-gray-300 hover:bg-surface-hover rounded-lg transition-colors"
+              @click="openAddColumn"
+            >
+              <Plus class="w-4 h-4" />
+              Add column
+            </button>
+            <div v-else class="flex flex-col gap-2">
+              <input
+                ref="newColumnInputRef"
+                v-model="newColumnTitle"
+                class="input py-2 px-3 text-sm w-full"
+                placeholder="Column title"
+                maxlength="60"
+                @keydown.enter.prevent="handleAddColumn"
+                @keydown.esc.prevent="cancelAddColumn"
+              />
+              <div class="flex gap-2">
+                <button class="btn-primary btn-sm flex-1" @click="handleAddColumn">
+                  Add
+                </button>
+                <button class="btn-secondary btn-sm flex-1" @click="cancelAddColumn">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.kanban-list-move,
+.kanban-list-enter-active,
+.kanban-list-leave-active {
+  transition: all 0.25s ease;
+}
+
+.kanban-list-enter-from {
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+}
+
+.kanban-list-leave-to {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+}
+</style>

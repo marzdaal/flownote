@@ -89,9 +89,9 @@ function selectArea(areaId: string) {
             <FileText class="w-5 h-5 text-emerald-400" />
           </div>
           <div>
-            <h1 class="text-xl font-semibold text-gray-100">Notes</h1>
+            <h1 class="text-xl font-semibold text-gray-100">Заметки</h1>
             <p class="text-sm text-gray-500">
-              {{ filesStore.notes.length }} notes
+              {{ filesStore.notes.length }} заметок
             </p>
           </div>
         </div>
