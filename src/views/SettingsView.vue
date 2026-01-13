@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Settings, FolderOpen, Palette, Type, Save, RotateCcw, LogOut } from 'lucide-vue-next'
+import { Settings, FolderOpen, Palette, Type, RotateCcw, LogOut } from 'lucide-vue-next'
 import { useSettingsStore } from '@/stores/settings'
 import { useFilesStore } from '@/stores/files'
 import { useRouter } from 'vue-router'
@@ -67,14 +67,6 @@ function closeVault() {
   settingsStore.updateSetting('vaultPath', '')
   filesStore.files.clear()
   router.push('/')
-}
-
-function saveSettings() {
-  settingsStore.updateSetting('vaultPath', vaultPath.value)
-  settingsStore.updateSetting('theme', theme.value)
-  settingsStore.updateSetting('fontSize', fontSize.value)
-  settingsStore.updateSetting('autoSave', autoSave.value)
-  settingsStore.updateSetting('spellcheck', spellcheck.value)
 }
 
 function resetSettings() {
@@ -255,13 +247,6 @@ function resetSettings() {
 
         <!-- Actions -->
         <div class="flex gap-3">
-          <button 
-            class="btn-primary"
-            @click.stop="saveSettings"
-          >
-            <Save class="w-4 h-4" />
-            Save Settings
-          </button>
           <button 
             class="btn-secondary"
             @click.stop="resetSettings"

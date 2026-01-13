@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { X, Save, Trash2, MoreHorizontal, ExternalLink } from 'lucide-vue-next'
+import { X, Trash2, MoreHorizontal, ExternalLink } from 'lucide-vue-next'
 import { useUiStore } from '@/stores/ui'
 import { useFilesStore } from '@/stores/files'
 import { useSettingsStore } from '@/stores/settings'
@@ -19,9 +19,10 @@ const { markdownToHtml } = useMarkdown()
 
 const activeTab = ref<'content' | 'properties'>('content')
 const isModified = ref(false)
-const isSaving = ref(false)
 const pendingContent = ref<string>('')
 let autoSaveTimeout: ReturnType<typeof setTimeout> | null = null
+let saveInFlight: Promise<void> | null = null
+let saveQueued = false
 
 const file = computed(() => uiStore.editorFile)
 
@@ -53,15 +54,7 @@ function handleContentChange(newContent: string) {
   pendingContent.value = newContent
   isModified.value = true
   
-  // Auto-save with debounce
-  if (settingsStore.settings.autoSave) {
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout)
-    }
-    autoSaveTimeout = setTimeout(() => {
-      handleSave()
-    }, settingsStore.settings.autoSaveDelay || 1000)
-  }
+  scheduleAutoSave()
 }
 
 const pendingFrontmatter = ref<Record<string, unknown>>({})
@@ -73,33 +66,56 @@ watch(() => file.value?.path, () => {
 
 async function handleSave() {
   if (!file.value || !isModified.value) return
-  
-  isSaving.value = true
+
+  if (saveInFlight) {
+    saveQueued = true
+    return
+  }
+
   try {
-    // Update file in store with content and frontmatter
-    await filesStore.updateFile(file.value.path, {
+    saveInFlight = filesStore.updateFile(file.value.path, {
       content: pendingContent.value,
       frontmatter: { ...file.value.frontmatter, ...pendingFrontmatter.value },
     })
+    await saveInFlight
     isModified.value = false
   } finally {
-    isSaving.value = false
+    saveInFlight = null
+  }
+
+  if (saveQueued) {
+    saveQueued = false
+    await handleSave()
   }
 }
 
 function handleFrontmatterUpdate(key: string, value: unknown) {
   pendingFrontmatter.value[key] = value
   isModified.value = true
-  
-  // Auto-save frontmatter changes too
-  if (settingsStore.settings.autoSave) {
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout)
-    }
-    autoSaveTimeout = setTimeout(() => {
-      handleSave()
-    }, settingsStore.settings.autoSaveDelay || 1000)
+
+  scheduleAutoSave()
+}
+
+function scheduleAutoSave() {
+  if (!settingsStore.settings.autoSave) return
+
+  if (autoSaveTimeout) {
+    clearTimeout(autoSaveTimeout)
+    autoSaveTimeout = null
   }
+
+  const delay = settingsStore.settings.autoSaveDelay ?? 0
+
+  if (delay <= 0) {
+    queueMicrotask(() => {
+      void handleSave()
+    })
+    return
+  }
+
+  autoSaveTimeout = setTimeout(() => {
+    void handleSave()
+  }, delay)
 }
 
 async function handleDelete() {
@@ -144,14 +160,6 @@ function handleClose() {
       </div>
 
       <div class="flex items-center gap-2">
-        <button 
-          class="btn-ghost btn-sm"
-          :disabled="!isModified || isSaving"
-          @click="handleSave"
-        >
-          <Save class="w-4 h-4" />
-          <span>{{ isSaving ? 'Saving...' : 'Save' }}</span>
-        </button>
         <button 
           class="btn-ghost btn-icon btn-sm text-gray-400 hover:text-danger"
           title="Delete"

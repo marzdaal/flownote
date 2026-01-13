@@ -17,7 +17,7 @@ describe('useSettingsStore', () => {
       expect(store.settings.showLineNumbers).toBe(false)
       expect(store.settings.spellcheck).toBe(true)
       expect(store.settings.autoSave).toBe(true)
-      expect(store.settings.autoSaveDelay).toBe(1000)
+      expect(store.settings.autoSaveDelay).toBe(0)
     })
 
     it('should have settings object available', () => {
