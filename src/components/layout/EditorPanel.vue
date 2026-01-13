@@ -61,7 +61,7 @@ const pendingFrontmatter = ref<Record<string, unknown>>({})
 
 // Initialize pending frontmatter when file changes
 watch(() => file.value?.path, () => {
-  pendingFrontmatter.value = { ...file.value?.frontmatter } ?? {}
+  pendingFrontmatter.value = file.value?.frontmatter ? { ...file.value.frontmatter } : {}
 }, { immediate: true })
 
 async function handleSave() {
