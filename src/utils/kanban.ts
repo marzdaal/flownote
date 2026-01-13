@@ -1,8 +1,10 @@
+import type { TaskStatus } from '@/types'
+
 export interface KanbanColumnConfig {
   id: string
   title: string
   color: string
-  status: string
+  status?: TaskStatus
 }
 
 export function reorderColumns<T extends { id: string }>(

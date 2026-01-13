@@ -44,7 +44,7 @@ interface KanbanColumnConfig {
   id: string
   title: string
   color: string
-  status: TaskStatus
+  status?: TaskStatus
 }
 
 interface KanbanColumn extends KanbanColumnConfig {
@@ -86,12 +86,20 @@ function hydrateColumns(): KanbanColumnConfig[] {
     if (!stored) return defaultColumns
     const parsed = JSON.parse(stored) as KanbanColumnConfig[]
     if (!Array.isArray(parsed)) return defaultColumns
+    const validStatuses = new Set<TaskStatus>([
+      'not-started',
+      'next-action',
+      'waiting',
+      'someday',
+      'done',
+    ])
     const defaultsById = new Map(defaultColumns.map(column => [column.id, column]))
     const merged = parsed
       .filter(column => column && typeof column.id === 'string')
       .map(column => ({
         ...defaultsById.get(column.id),
         ...column,
+        status: column.status && validStatuses.has(column.status) ? column.status : undefined,
       }))
     const existingIds = new Set(merged.map(column => column.id))
     defaultColumns.forEach(column => {
@@ -132,7 +140,11 @@ watch(addColumnOpen, async (isOpen) => {
 })
 
 const statusToColumnId = computed(() => {
-  return new Map(columnConfigs.value.map(column => [column.status, column.id]))
+  return new Map(
+    columnConfigs.value
+      .filter(column => column.status)
+      .map(column => [column.status as TaskStatus, column.id])
+  )
 })
 
 const filteredTasks = computed(() => {
@@ -256,9 +268,8 @@ function handleAddColumn() {
     id: createColumnId(validated.value),
     title: validated.value,
     color: 'border-gray-500',
-    status: '',
+    status: undefined,
   }
-  column.status = column.id
 
   const previous = columnConfigs.value
   const next = addColumnUtil(previous, column)
