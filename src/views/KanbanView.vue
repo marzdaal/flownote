@@ -13,6 +13,7 @@ const uiStore = useUiStore()
 const areasStore = useAreasStore()
 
 const filterArea = ref<AreaType | 'all'>('all')
+const taskStatusList = ['not-started', 'next-action', 'waiting', 'someday', 'done'] as const
 
 // Sync with uiStore.selectedArea when navigating from sidebar or Areas view
 onMounted(() => {
@@ -525,8 +526,11 @@ async function onDrop(event: DragEvent, columnId: string) {
 function getColumnConfig(columnId: string) {
   const tasksFolder = filesStore.vaultConfig.folders.tasks
   const columnStatus = columnConfigs.value.find(column => column.id === columnId)?.status
+  const safeStatus = columnStatus && taskStatusList.includes(columnStatus)
+    ? (columnStatus as TaskStatus)
+    : undefined
 
-  switch (columnStatus) {
+  switch (safeStatus) {
     case 'not-started':
       return {
         folder: `${tasksFolder}/Next Actions`,
@@ -548,7 +552,7 @@ function getColumnConfig(columnId: string) {
         frontmatter: { status: 'someday' }
       }
     default:
-      return { folder: tasksFolder, frontmatter: columnStatus ? { status: columnStatus } : {} }
+      return { folder: tasksFolder, frontmatter: safeStatus ? { status: safeStatus } : {} }
   }
 }
 
