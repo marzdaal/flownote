@@ -89,12 +89,14 @@ const draggedTask = ref<Task | null>(null)
 const dragOverColumn = ref<string | null>(null)
 const isDragging = ref(false)
 const dragStartPos = ref<{ x: number; y: number } | null>(null)
+const hasDragged = ref(false)
 
 function onDragStart(event: DragEvent, task: Task) {
   console.log('Drag start:', task.name)
   event.stopPropagation()
   draggedTask.value = task
   isDragging.value = true
+  hasDragged.value = true
   dragStartPos.value = { x: event.clientX, y: event.clientY }
   
   if (event.dataTransfer) {
@@ -154,6 +156,9 @@ function handleMouseUp(event: MouseEvent) {
 
 function cleanupDrag() {
   isDragging.value = false
+  setTimeout(() => {
+    hasDragged.value = false
+  }, 100)
   dragStartPos.value = null
   document.removeEventListener('mousemove', handleMouseMove)
   document.removeEventListener('mouseup', handleMouseUp)
@@ -189,6 +194,13 @@ async function handleDrop(columnId: string) {
   
   draggedTask.value = null
   dragOverColumn.value = null
+}
+
+function handleTaskClick(task: Task) {
+  if (isDragging.value || hasDragged.value) {
+    return
+  }
+  uiStore.openEditor(task)
 }
 
 function onDragEnd(event: DragEvent) {
@@ -438,20 +450,22 @@ async function createTaskInColumn(columnId: string) {
           </div>
 
           <!-- Tasks -->
-          <div class="flex-1 overflow-y-auto p-2 space-y-2 no-drag" style="-webkit-app-region: no-drag;">
-            <div
-              v-for="task in column.tasks"
-              :key="task.path"
-              draggable="true"
-              class="bg-surface rounded-lg border border-border hover:border-border-light transition-all cursor-grab active:cursor-grabbing select-none no-drag"
-              :class="{ 'opacity-50': draggedTask?.path === task.path }"
-              style="-webkit-app-region: no-drag !important; user-select: none;"
-              @dragstart="onDragStart($event, task)"
-              @dragend="onDragEnd($event)"
-              @click.stop
-            >
-              <TaskItem :task="task" :compact="true" />
-            </div>
+          <div class="flex-1 overflow-y-auto p-2 no-drag" style="-webkit-app-region: no-drag;">
+            <TransitionGroup name="kanban-list" tag="div" class="space-y-2">
+              <div
+                v-for="task in column.tasks"
+                :key="task.path"
+                draggable="true"
+                class="bg-surface rounded-lg border border-border hover:border-border-light transition-all cursor-grab active:cursor-grabbing select-none no-drag"
+                :class="{ 'opacity-50': draggedTask?.path === task.path }"
+                style="-webkit-app-region: no-drag !important; user-select: none;"
+                @dragstart="onDragStart($event, task)"
+                @dragend="onDragEnd($event)"
+                @click="handleTaskClick(task)"
+              >
+                <TaskItem :task="task" :compact="true" :open-on-click="false" />
+              </div>
+            </TransitionGroup>
 
             <!-- Empty state -->
             <div 
@@ -475,3 +489,21 @@ async function createTaskInColumn(columnId: string) {
     </div>
   </div>
 </template>
+
+<style scoped>
+.kanban-list-move,
+.kanban-list-enter-active,
+.kanban-list-leave-active {
+  transition: all 0.25s ease;
+}
+
+.kanban-list-enter-from {
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+}
+
+.kanban-list-leave-to {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+}
+</style>

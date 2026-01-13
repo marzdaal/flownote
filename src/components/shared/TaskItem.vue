@@ -8,6 +8,7 @@ import { useAreasStore } from '@/stores/areas'
 const props = defineProps<{
   task: Task
   compact?: boolean
+  openOnClick?: boolean
 }>()
 
 const uiStore = useUiStore()
@@ -43,8 +44,28 @@ const isToday = computed(() => {
   return dueDate.value === new Date().toISOString().split('T')[0]
 })
 
+const shouldOpenOnClick = computed(() => props.openOnClick ?? !props.compact)
+
 function openTask() {
   uiStore.openEditor(props.task)
+}
+
+function handleClick() {
+  if (shouldOpenOnClick.value) {
+    openTask()
+  }
+}
+
+function handleMouseDown(event: MouseEvent) {
+  if (!props.compact) {
+    event.stopPropagation()
+  }
+}
+
+function handleDragStart(event: DragEvent) {
+  if (!props.compact) {
+    event.stopPropagation()
+  }
 }
 </script>
 
@@ -53,12 +74,12 @@ function openTask() {
     class="flex items-start gap-3 p-3 rounded-lg transition-colors group"
     :class="{ 
       'bg-surface-light': isToday, 
-      'cursor-pointer hover:bg-surface-hover': !compact
+      'cursor-pointer hover:bg-surface-hover': shouldOpenOnClick
     }"
     :style="compact ? '-webkit-app-region: no-drag;' : ''"
-    @click="!compact && openTask()"
-    @mousedown.stop
-    @dragstart.stop
+    @click="handleClick"
+    @mousedown="handleMouseDown"
+    @dragstart="handleDragStart"
   >
     <!-- Checkbox -->
     <button 
