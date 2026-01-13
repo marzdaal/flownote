@@ -696,7 +696,7 @@ async function createTaskInColumn(columnId: string) {
                 :class="{ 'opacity-50': draggedTask?.path === task.path }"
                 style="-webkit-app-region: no-drag !important; user-select: none;"
                 @dragstart="onDragStart($event, task)"
-                @dragend="onDragEnd($event)"
+                @dragend="onDragEnd"
                 @click="handleTaskClick(task)"
               >
                 <TaskItem :task="task" :compact="true" :open-on-click="false" />
