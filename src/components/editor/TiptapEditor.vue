@@ -19,7 +19,6 @@ import {
   Heading3,
   Quote,
   Minus,
-  Link as LinkIcon,
   Undo,
   Redo
 } from 'lucide-vue-next'

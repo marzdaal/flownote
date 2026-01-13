@@ -5,7 +5,7 @@ import { useFilesStore } from '@/stores/files'
 import { useUiStore } from '@/stores/ui'
 import { useAreasStore } from '@/stores/areas'
 import TaskItem from '@/components/shared/TaskItem.vue'
-import type { Task, AreaType } from '@/types'
+import type { Task, AreaType, TaskStatus, Frontmatter } from '@/types'
 import { addColumn as addColumnUtil, reorderColumns, updateColumnTitle } from '@/utils/kanban'
 
 const filesStore = useFilesStore()
@@ -43,7 +43,7 @@ interface KanbanColumnConfig {
   id: string
   title: string
   color: string
-  status: string
+  status: TaskStatus
 }
 
 interface KanbanColumn extends KanbanColumnConfig {
@@ -382,7 +382,7 @@ async function handleDrop(columnId: string) {
   if (!draggedTask.value) return
   
   const task = draggedTask.value
-  const newStatus = columnConfigs.value.find(column => column.id === columnId)?.status ?? ''
+  const newStatus = columnConfigs.value.find(column => column.id === columnId)?.status
   
   if (newStatus && task.frontmatter.status !== newStatus) {
     console.log('Updating task status from', task.frontmatter.status, 'to', newStatus)
@@ -402,7 +402,7 @@ function handleTaskClick(task: Task) {
   uiStore.openEditor(task)
 }
 
-function onDragEnd(event: DragEvent) {
+function onDragEnd() {
   console.log('Drag end')
   cleanupDrag()
 }
@@ -500,7 +500,7 @@ async function onDrop(event: DragEvent, columnId: string) {
   }
 
   const task = draggedTask.value
-  const newStatus = columnConfigs.value.find(column => column.id === columnId)?.status ?? ''
+  const newStatus = columnConfigs.value.find(column => column.id === columnId)?.status
 
   // Just update status, no folder movement needed
   if (newStatus && task.frontmatter.status !== newStatus) {
@@ -559,7 +559,7 @@ async function createTaskInColumn(columnId: string) {
   const config = getColumnConfig(columnId)
   
   // Build frontmatter with area if filtered
-  const frontmatter: Record<string, unknown> = {
+  const frontmatter: Partial<Frontmatter> = {
     ...config.frontmatter,
     created: new Date().toISOString().split('T')[0]
   }

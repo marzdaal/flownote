@@ -235,7 +235,7 @@ function closeModals() {
                     class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-hover cursor-pointer"
                     @click.stop="uiStore.openEditor(project)"
                   >
-                    <div class="w-2 h-2 rounded-full" :class="area.bgColor" />
+                    <div class="w-2 h-2 rounded-full" :class="getColorClass(area.color)" />
                     <span class="text-gray-200 flex-1">{{ project.name }}</span>
                     <span 
                       class="badge text-xs"

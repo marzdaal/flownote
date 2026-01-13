@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { X, Trash2, MoreHorizontal, ExternalLink } from 'lucide-vue-next'
+import { X, Trash2, MoreHorizontal } from 'lucide-vue-next'
 import { useUiStore } from '@/stores/ui'
 import { useFilesStore } from '@/stores/files'
 import { useSettingsStore } from '@/stores/settings'
@@ -21,7 +21,7 @@ const activeTab = ref<'content' | 'properties'>('content')
 const isModified = ref(false)
 const pendingContent = ref<string>('')
 let autoSaveTimeout: ReturnType<typeof setTimeout> | null = null
-let saveInFlight: Promise<void> | null = null
+let saveInFlight: ReturnType<typeof filesStore.updateFile> | null = null
 let saveQueued = false
 
 const file = computed(() => uiStore.editorFile)
@@ -61,7 +61,7 @@ const pendingFrontmatter = ref<Record<string, unknown>>({})
 
 // Initialize pending frontmatter when file changes
 watch(() => file.value?.path, () => {
-  pendingFrontmatter.value = { ...file.value?.frontmatter } || {}
+  pendingFrontmatter.value = { ...file.value?.frontmatter } ?? {}
 }, { immediate: true })
 
 async function handleSave() {

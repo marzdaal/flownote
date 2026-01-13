@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useSettingsStore } from '@/stores/settings'
 import { 
   Inbox, 
   CalendarDays, 

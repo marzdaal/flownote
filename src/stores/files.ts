@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { VaultFile, Task, Project, Note, DailyNote, VaultConfig, AreaType } from '@/types'
+import type { VaultFile, Task, Project, Note, DailyNote, VaultConfig } from '@/types'
 import { useIndexingStore } from './indexing'
 
 // Default vault config matching our Obsidian structure
@@ -130,7 +130,6 @@ export const useFilesStore = defineStore('files', () => {
       // Try to load from Tauri FS if available
       if (vaultConfig.value.path && vaultConfig.value.path !== 'demo') {
         try {
-          const { readDir, readTextFile } = await import('@tauri-apps/plugin-fs')
           await loadFromFileSystem(vaultConfig.value.path)
           return
         } catch (e) {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import type { Frontmatter, TaskStatus, ProjectStatus, Priority, AreaType } from '@/types'
+import { ref, computed } from 'vue'
+import type { Frontmatter, TaskStatus, ProjectStatus, Priority } from '@/types'
 import { Calendar, Tag, User, Flag, FolderKanban, Target, Hash } from 'lucide-vue-next'
 import { useAreasStore } from '@/stores/areas'
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Calendar, ChevronLeft, ChevronRight, Plus } from 'lucide-vue-next'
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { useFilesStore } from '@/stores/files'
 import { useUiStore } from '@/stores/ui'
 import type { Task } from '@/types'

@@ -12,6 +12,7 @@ export function useVault() {
     error.value = null
 
     try {
+      filesStore.vaultConfig.path = path
       // In Tauri, this would call the Rust backend
       // const files = await invoke('read_vault', { vaultPath: path })
       await filesStore.initVault()

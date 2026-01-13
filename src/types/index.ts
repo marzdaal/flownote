@@ -35,6 +35,7 @@ export type AreaType = string // Dynamic areas
 export interface Task extends VaultFile {
   frontmatter: {
     status: TaskStatus
+    id?: string
     area?: AreaType
     project?: string
     due?: string
@@ -47,6 +48,7 @@ export interface Task extends VaultFile {
 export interface Project extends VaultFile {
   frontmatter: {
     status: ProjectStatus
+    id?: string
     area?: AreaType
     start?: string
     end?: string
@@ -56,6 +58,8 @@ export interface Project extends VaultFile {
 
 export interface Note extends VaultFile {
   frontmatter: {
+    id?: string
+    area?: AreaType
     tags?: string[]
     created: string
   }
